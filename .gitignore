@@ -1,6 +1,5 @@
 *.o
 *.bundle
 *.gem
-*.gemspec
 *.tmproj
 .DS_Store
