@@ -63,7 +63,7 @@
 #include "swephexp.h"
 #include "sweph.h"
 #include "swephlib.h"
-#include "swemptab.c"
+#include "./src/swemptab.c"
 
 #define TIMESCALE 3652500.0
 
