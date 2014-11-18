@@ -1,6 +1,7 @@
-== Swe4r (Swiss Ephemeris for Ruby)
+== Swe4r (Swiss Ephemeris 2.0 for Ruby)
 
 The Swe4r rubygem provides a C extension for the standard functions of the {Swiss Ephemeris API}[http://www.astro.com/swisseph/]. 
+This version has been updated to use the latest (fev/2014) Swiss Ephemeris API.
 
 == Installation
 
