@@ -116,6 +116,17 @@ static VALUE t_swe_set_ephe_path(VALUE self, VALUE path)
 }	
 
 /*
+ * Set directory path of ephemeris files to work with jpl
+ * http://www.astro.com/swisseph/swephprg.htm#_Toc283735481
+ * int swe_set_jpl_file(char *fname);
+ */
+static VALUE t_swe_set_jpl_file(VALUE self, VALUE path)
+{
+	swe_set_jpl_file(StringValuePtr(path));
+	return Qnil;
+}	
+
+/*
  * Get the Julian day number from year, month, day, hour
  * http://www.astro.com/swisseph/swephprg.htm#_Toc283735468
 	double swe_julday(
@@ -257,6 +268,7 @@ void Init_swe4r()
 	
 	// Module Functions
 	rb_define_module_function(rb_mSwe4r, "swe_set_ephe_path", t_swe_set_ephe_path, 1);
+	rb_define_module_function(rb_mSwe4r, "swe_set_jpl_file", t_swe_set_jpl_file, 1);
 	rb_define_module_function(rb_mSwe4r, "swe_julday", t_swe_julday, 4);
 	rb_define_module_function(rb_mSwe4r, "swe_set_topo", t_swe_set_topo, 3);
 	rb_define_module_function(rb_mSwe4r, "swe_calc_ut", t_swe_calc_ut, 3);
