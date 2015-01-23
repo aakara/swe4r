@@ -1,16 +1,20 @@
-/* 
- | $Header: /home/dieter/sweph/RCS/swejpl.h,v 1.74 2008/06/16 10:07:20 dieter Exp $
- |
- | Subroutines for reading JPL ephemerides.
- | derived from testeph.f as contained in DE403 distribution July 1995.
- | works with DE200, DE102, DE403, DE404, DE405, DE406, DE431
- | (attention, these ephemerides do not have exactly the same reference frame)
 
+/* 
+  $Header: /home/dieter/sweph/RCS/swemini.c,v 1.74 2008/06/16 10:07:20 dieter Exp $
+
+  swemini.c	A minimal program to test the Swiss Ephemeris.
+
+  Input: a date (in gregorian calendar, sequence day.month.year)
+  Output: Planet positions at midnight Universal time, ecliptic coordinates,
+          geocentric apparent positions relative to true equinox of date, as 
+          usual in western astrology.
+		
+   
   Authors: Dieter Koch and Alois Treindl, Astrodienst Zurich
 
 **************************************************************/
 /* Copyright (C) 1997 - 2008 Astrodienst AG, Switzerland.  All rights reserved.
-
+  
   License conditions
   ------------------
 
@@ -64,41 +68,64 @@
 */
 
 
-#include "sweodef.h"
+#include "swephexp.h" 	/* this includes  "sweodef.h" */
 
-#define J_MERCURY	0	/* jpl body indices, modified by Alois */
-#define J_VENUS		1	/* now they start at 0 and not at 1 */
-#define J_EARTH		2
-#define J_MARS		3
-#define J_JUPITER	4
-#define J_SATURN	5
-#define J_URANUS	6
-#define J_NEPTUNE	7
-#define J_PLUTO		8
-#define J_MOON		9
-#define J_SUN		10
-#define J_SBARY		11
-#define J_EMB		12
-#define J_NUT		13
-#define J_LIB		14
-
-/*
- * compute position and speed at time et, for body ntarg with center
- * ncent. rrd must be double[6] to contain the return vectors.
- * ntarg can be all of the above, ncent all except J_NUT and J_LIB.
- * Librations and Nutations are not affected by ncent.
- */
-extern int swi_pleph(double et, int ntarg, int ncent, double *rrd, char *serr);
-
-/*
- * read the ephemeris constants. ss[0..2] returns start, end and granule size.
- * If do_show is TRUE, a list of constants is printed to stdout.
- */
-extern void swi_close_jpl_file(void);
-
-extern int swi_open_jpl_file(double *ss, char *fname, char *fpath, char *serr);
-
-extern int32 swi_get_jpl_denum(void);
-
-extern void swi_IERS_FK5(double *xin, double *xout, int dir);
-
+int main()
+{
+  char sdate[AS_MAXCH], snam[40], serr[AS_MAXCH];  
+  int jday = 1, jmon = 1, jyear = 2000;
+  double jut = 0.0;
+  double tjd, te, x2[6];
+  int32 iflag, iflgret;
+  int p;
+  iflag = SEFLG_SPEED;
+  while (TRUE) {
+    printf("\nDate (d.m.y) ?");
+    /*gets(sdate);*/
+    if( !fgets(sdate, sizeof(sdate)-1, stdin) ) return OK;
+		/*
+		 * stop if a period . is entered
+		 */
+    if (*sdate == '.') 
+      return OK;
+    if (sscanf (sdate, "%d%*c%d%*c%d", &jday,&jmon,&jyear) < 1) exit(1);
+	    /*
+	     * we have day, month and year and convert to Julian day number
+	     */
+    tjd = swe_julday(jyear,jmon,jday,jut,SE_GREG_CAL);        
+	    /*
+	     * compute Ephemeris time from Universal time by adding delta_t
+	     */
+    te = tjd + swe_deltat(tjd);
+    printf("date: %02d.%02d.%d at 0:00 Universal time\n", jday, jmon, jyear);
+    printf("planet     \tlongitude\tlatitude\tdistance\tspeed long.\n");
+	    /*
+	     * a loop over all planets
+	     */
+    for (p = SE_SUN; p <= SE_CHIRON; p++) {
+      if (p == SE_EARTH) continue;
+		/*
+		 * do the coordinate calculation for this planet p
+		 */
+      iflgret = swe_calc(te, p, iflag, x2, serr);
+	      /*
+	       * if there is a problem, a negative value is returned and an 
+	       * errpr message is in serr.
+	       */
+      if (iflgret < 0) 
+	printf("error: %s\n", serr);
+      else if (iflgret != iflag)
+	printf("warning: iflgret != iflag. %s\n", serr);
+	      /*
+	       * get the name of the planet p
+	       */
+      swe_get_planet_name(p, snam);
+	      /*
+	       * print the coordinates
+	       */
+      printf("%10s\t%11.7f\t%10.7f\t%10.7f\t%10.7f\n",
+	     snam, x2[0], x2[1], x2[2], x2[3]);
+    }
+  }
+  return OK;
+}

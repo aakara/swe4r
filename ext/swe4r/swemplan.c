@@ -63,7 +63,7 @@
 #include "swephexp.h"
 #include "sweph.h"
 #include "swephlib.h"
-#include "src/swemptab.c"
+#include "./src/swemptab.c"
 
 #define TIMESCALE 3652500.0
 
@@ -486,7 +486,7 @@ static void embofs_mosh(double tjd, double *xemb)
   /* Convert to equatorial */
   swi_coortrf2(xyz, xyz, -seps, ceps);
   /* Precess to equinox of J2000.0 */
-  swi_precess(xyz, tjd, J_TO_J2000);/**/
+  swi_precess(xyz, tjd, 0, J_TO_J2000);/**/
   /* now emb -> earth */
   for (i = 0; i <= 2; i++)
     xemb[i] -= xyz[i] / (EARTH_MOON_MRAT + 1.0);
@@ -665,13 +665,13 @@ int swi_osc_el_plan(double tjd, double *xp, int ipl, int ipli, double *xearth, d
   xp[4] = pqr[3] * x[3] + pqr[4] * x[4];
   xp[5] = pqr[6] * x[3] + pqr[7] * x[4];
   /* transformation to equator */
-  eps = swi_epsiln(tequ);
+  eps = swi_epsiln(tequ, 0);
   swi_coortrf(xp, xp, -eps);
   swi_coortrf(xp+3, xp+3, -eps);
   /* precess to J2000 */
   if (tequ != J2000) {
-    swi_precess(xp, tequ, J_TO_J2000);
-    swi_precess(xp+3, tequ, J_TO_J2000);
+    swi_precess(xp, tequ, 0, J_TO_J2000);
+    swi_precess(xp+3, tequ, 0, J_TO_J2000);
   }
   /* to solar system barycentre */
   if (fict_ifl & FICT_GEO) {
@@ -754,11 +754,11 @@ static int read_elements_file(int32 ipl, double tjd,
     if ((sp = strchr(s, '#')) != NULL)
       *sp = '\0';
     ncpos = swi_cutstr(s, ",", cpos, 20);
-    sprintf(serri, "error in file %s, line %7.0f:",
-              SE_FICTFILE, (double) iline);
+    sprintf(serri, "error in file %s, line %7.0f:", SE_FICTFILE, (double) iline);
     if (ncpos < 9) {
-      if (serr != NULL) 
+      if (serr != NULL) {
         sprintf(serr, "%s nine elements required", serri);
+      }
       return ERR;
     }
     iplan++;
@@ -777,8 +777,9 @@ static int read_elements_file(int32 ipl, double tjd,
       else if (strncmp(sp, "j1900", 5) == OK)
         *tjd0 = J1900;
       else if (*sp == 'j' || *sp == 'b') {
-        if (serr != NULL) 
+        if (serr != NULL) {
           sprintf(serr, "%s invalid epoch", serri);
+	}
         goto return_err;
       } else
         *tjd0 = atof(sp);
@@ -800,8 +801,9 @@ static int read_elements_file(int32 ipl, double tjd,
       else if (strncmp(sp, "jdate", 5) == OK)
         *tequ = tjd;
       else if (*sp == 'j' || *sp == 'b') {
-        if (serr != NULL) 
+        if (serr != NULL) {
           sprintf(serr, "%s invalid equinox", serri);
+	}
         goto return_err;
       } else
         *tequ = atof(sp);
@@ -811,8 +813,9 @@ static int read_elements_file(int32 ipl, double tjd,
       retc = check_t_terms(tt, cpos[2], mano);
 	  *mano = swe_degnorm(*mano);
       if (retc == ERR) {
-        if (serr != NULL)
+        if (serr != NULL) {
           sprintf(serr, "%s mean anomaly value invalid", serri);
+	}
         goto return_err;
       }
       /* if mean anomaly has t terms (which happens with fictitious 
@@ -828,8 +831,9 @@ static int read_elements_file(int32 ipl, double tjd,
     if (sema != NULL) {
       retc = check_t_terms(tt, cpos[3], sema);
       if (*sema <= 0 || retc == ERR) {
-        if (serr != NULL)
+        if (serr != NULL) {
           sprintf(serr, "%s semi-axis value invalid", serri);
+	}
         goto return_err;
       }
     }
@@ -837,8 +841,9 @@ static int read_elements_file(int32 ipl, double tjd,
     if (ecce != NULL) {
       retc = check_t_terms(tt, cpos[4], ecce);
       if (*ecce >= 1 || *ecce < 0 || retc == ERR) {
-        if (serr != NULL)
+        if (serr != NULL) {
           sprintf(serr, "%s eccentricity invalid (no parabolic or hyperbolic orbits allowed)", serri);
+	}
         goto return_err;
       }
     }
@@ -847,8 +852,9 @@ static int read_elements_file(int32 ipl, double tjd,
       retc = check_t_terms(tt, cpos[5], parg);
 	  *parg = swe_degnorm(*parg);
       if (retc == ERR) {
-        if (serr != NULL)
+        if (serr != NULL) {
           sprintf(serr, "%s perihelion argument value invalid", serri);
+	}
         goto return_err;
       }
       *parg *= DEGTORAD;
@@ -858,8 +864,9 @@ static int read_elements_file(int32 ipl, double tjd,
       retc = check_t_terms(tt, cpos[6], node);
 	  *node = swe_degnorm(*node);
       if (retc == ERR) {
-        if (serr != NULL)
+        if (serr != NULL) {
           sprintf(serr, "%s node value invalid", serri);
+	}
         goto return_err;
       }
       *node *= DEGTORAD;
@@ -869,8 +876,9 @@ static int read_elements_file(int32 ipl, double tjd,
       retc = check_t_terms(tt, cpos[7], incl);
 	  *incl = swe_degnorm(*incl);
       if (retc == ERR) {
-        if (serr != NULL)
+        if (serr != NULL) {
           sprintf(serr, "%s inclination value invalid", serri);
+	}
         goto return_err;
       }
       *incl *= DEGTORAD;
@@ -893,8 +901,9 @@ static int read_elements_file(int32 ipl, double tjd,
     break;
   }
   if (!elem_found) {
-    if (serr != NULL)
+    if (serr != NULL) {
       sprintf(serr, "%s elements for planet %7.0f not found", serri, (double) ipl);
+    }
     goto return_err;
   }
   fclose(fp);
